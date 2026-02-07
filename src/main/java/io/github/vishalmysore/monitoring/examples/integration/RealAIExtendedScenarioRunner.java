@@ -32,7 +32,7 @@ public class RealAIExtendedScenarioRunner {
 
     public static void main(String[] args) {
         System.setProperty("tools4ai.log", "DEBUG");
-        System.out.println("=== EXTENDED REAL AI MONITORING SUITE ===");
+        log.info("=== EXTENDED REAL AI MONITORING SUITE ===");
 
         // Explicitly set the path to tools4ai.properties so action scanning works
         System.setProperty("tools4ai.properties.path",
@@ -43,38 +43,38 @@ public class RealAIExtendedScenarioRunner {
 
             // PRE-LOAD ACTIONS to ensure ClassLoader has them (helps Reflections library)
             Class.forName("io.github.vishalmysore.monitoring.examples.integration.MedicalDecisionAction");
-            System.out.println("Pre-loaded MedicalDecisionAction class.");
+            log.info("Pre-loaded MedicalDecisionAction class.");
         } catch (Exception e) {
-            System.err.println("Failed to initialize AI Processor: " + e.getMessage());
+            log.severe("Failed to initialize AI Processor: " + e.getMessage());
             e.printStackTrace();
             return;
         }
 
         List<ScenarioDef> scenarios = getScenarios();
-        System.out.println("Loaded " + scenarios.size() + " scenarios.");
+        log.info("Loaded " + scenarios.size() + " scenarios.");
 
         for (ScenarioDef scenario : scenarios) {
             runScenario(scenario);
         }
 
-        System.out.println("\n=== FINAL SUITE RESULTS ===");
+        log.info("\n=== FINAL SUITE RESULTS ===");
         // Simple aggregate reporting
         // In a real app, we'd use the MonitoringService's reporting capabilities more
         // extensively
     }
 
     private static void runScenario(ScenarioDef scenario) {
-        System.out.println("\n--------------------------------------------------");
-        System.out.println("RUNNING SCENARIO: " + scenario.name);
+        log.info("\n--------------------------------------------------");
+        log.info("RUNNING SCENARIO: " + scenario.name);
 
         // 1. THEORY MODE
-        System.out.println("Querying THEORY Mode...");
+        log.info("Querying THEORY Mode...");
         String theoryResponse = "Error";
         try {
             theoryResponse = processor.query(scenario.theoryPrompt);
-            System.out.println("THEORY Response: " + limitLog(theoryResponse));
+            log.info("THEORY Response: " + limitLog(theoryResponse));
         } catch (Exception e) {
-            System.err.println("Theory prompt failed: " + e.getMessage());
+            log.severe("Theory prompt failed: " + e.getMessage());
             e.printStackTrace();
         }
 
@@ -89,15 +89,15 @@ public class RealAIExtendedScenarioRunner {
         }
 
         // 2. ACTION MODE
-        System.out.println("Querying ACTION Mode...");
+        log.info("Querying ACTION Mode...");
         String actionResponse = "Error";
         try {
             // Use processSingleAction to trigger the actual Java tool execution
             Object result = processor.processSingleAction(scenario.actionPrompt);
             actionResponse = (result != null) ? result.toString() : "null";
-            System.out.println("ACTION Response: " + limitLog(actionResponse));
+            log.info("ACTION Response: " + limitLog(actionResponse));
         } catch (Exception e) {
-            System.err.println("Action prompt failed: " + e.getMessage());
+            log.severe("Action prompt failed: " + e.getMessage());
             e.printStackTrace();
         }
 
@@ -126,18 +126,18 @@ public class RealAIExtendedScenarioRunner {
         try {
             List<DecisionPair> reversals = monitoring.analyzeReversals(scenario.id);
             if (reversals.isEmpty()) {
-                System.out.println("✅ CONSISTENT: No reversal detected.");
+                log.info("✅ CONSISTENT: No reversal detected.");
             } else {
-                System.out.println("⚠️ REVERSAL DETECTED!");
+                log.warning("⚠️ REVERSAL DETECTED!");
                 reversals.forEach(r -> {
-                    System.out.println(String.format("   Shift: %s -> %s (%s)",
+                    log.warning(String.format("   Shift: %s -> %s (%s)",
                             r.getTheoryDecision().getChoice(),
                             r.getActionDecision().getChoice(),
                             r.getReversalDirection()));
                 });
             }
         } catch (Exception e) {
-            System.err.println("Analysis failed: " + e.getMessage());
+            log.severe("Analysis failed: " + e.getMessage());
         }
     }
 
